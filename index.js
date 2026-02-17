@@ -164,6 +164,93 @@ function render() {
   app.innerHTML = screen === "login" ? renderLogin() : renderApp();
   bindEvents();
 }
+{/* My Acknowledgments */}
+{activeNav === "acknowledgments" && (
+  <div>
+    <div style={{ marginBottom: 24 }}>
+      <h1 style={{ color: "#e5e7eb", fontSize: 16, letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 4px" }}>
+        MY ACKNOWLEDGMENTS
+      </h1>
+      <div style={{ color: "#4b5563", fontSize: 11, letterSpacing: "0.1em" }}>
+        Pending and acknowledged documents
+      </div>
+    </div>
+
+    {/* Acknowledgment Table */}
+    <div style={{ background: "#111318", border: "1px solid #1f2937" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 80px 80px", padding: "10px 16px", borderBottom: "1px solid #1f2937" }}>
+        {["TITLE / DEPARTMENT", "TYPE", "STATUS", ""].map((h, i) => (
+          <div key={i} style={{ color: "#374151", fontSize: 9, letterSpacing: "0.12em" }}>{h}</div>
+        ))}
+      </div>
+      {docs
+        .filter(d => d.requiresAck)
+        .map(doc => {
+          const isAck = acknowledged.has(doc.id);
+          return (
+            <div key={doc.id} style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 80px 80px 80px",
+              padding: "12px 16px",
+              borderBottom: "1px solid #161920",
+              alignItems: "center",
+              background: isAck ? "#111c12" : "transparent",
+              transition: "background 0.2s",
+              cursor: "pointer"
+            }}
+              onClick={() => setSelectedDoc(doc)}
+              onMouseEnter={e => { if (!isAck) e.currentTarget.style.background = "#131620"; }}
+              onMouseLeave={e => { if (!isAck) e.currentTarget.style.background = "transparent"; }}
+            >
+              <div>
+                <div style={{ color: "#d1d5db", fontSize: 12, marginBottom: 3 }}>{doc.title}</div>
+                <div style={{ color: deptColors[doc.dept] || "#6b7280", fontSize: 10, letterSpacing: "0.1em" }}>{doc.dept}</div>
+              </div>
+              <div style={{ color: "#4b5563", fontSize: 10 }}>{doc.type}</div>
+              <div style={{ color: isAck ? "#4ade80" : "#f59e0b", fontSize: 10 }}>{isAck ? "ACKNOWLEDGED" : "PENDING"}</div>
+              <div>
+                {!isAck && (
+                  <button onClick={e => { e.stopPropagation(); setAcknowledged(prev => new Set([...prev, doc.id])); }}
+                    style={{ background: "#1a2a12", border: "1px solid #4ade80", color: "#4ade80", padding: "4px 12px", fontSize: 10, cursor: "pointer", fontFamily: "inherit" }}>
+                    ◇ ACK
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      {docs.filter(d => d.requiresAck).length === 0 && (
+        <div style={{ padding: "40px", textAlign: "center", color: "#374151", fontSize: 12, letterSpacing: "0.1em" }}>
+          NO DOCUMENTS REQUIRING ACKNOWLEDGMENT
+        </div>
+      )}
+    </div>
+
+    {/* Selected Doc Detail */}
+    {selectedDoc && selectedDoc.requiresAck && (
+      <div style={{ marginTop: 16, background: "#111318", border: "1px solid #1f2937", padding: "20px" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
+          <div>
+            <div style={{ color: "#e5e7eb", fontSize: 14, marginBottom: 4 }}>{selectedDoc.title}</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <span style={{ color: deptColors[selectedDoc.dept], fontSize: 10, padding: "2px 8px", border: `1px solid ${deptColors[selectedDoc.dept]}40`, background: `${deptColors[selectedDoc.dept]}10` }}>{selectedDoc.dept}</span>
+              <span style={{ color: "#4b5563", fontSize: 10, padding: "2px 8px", border: "1px solid #1f2937" }}>{selectedDoc.type}</span>
+            </div>
+          </div>
+          <button onClick={() => setSelectedDoc(null)} style={{ background: "none", border: "none", color: "#4b5563", cursor: "pointer", fontSize: 16 }}>✕</button>
+        </div>
+        {!acknowledged.has(selectedDoc.id) && (
+          <button onClick={() => setAcknowledged(prev => new Set([...prev, selectedDoc.id]))}
+            style={{ background: "#1a2a12", border: "1px solid #4ade80", color: "#4ade80", padding: "8px 16px", fontSize: 10, cursor: "pointer", fontFamily: "inherit" }}>
+            ◇ ACKNOWLEDGE
+          </button>
+        )}
+        {acknowledged.has(selectedDoc.id) && <span style={{ color: "#4ade80", fontSize: 10, padding: "8px 0", letterSpacing: "0.1em" }}>✓ ACKNOWLEDGED</span>}
+      </div>
+    )}
+  </div>
+)}
+
 
 // ======= TEMPLATES =======
 function renderLogin() {
