@@ -1,1299 +1,198 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Intranet Portal — Document Management System</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
-<style>
-  :root {
-    --bg: #080a0d;
-    --surface: #0d1017;
-    --surface2: #111520;
-    --border: #1a2030;
-    --border2: #242d3d;
-    --blue: #2d7dd2;
-    --blue-glow: rgba(45,125,210,0.15);
-    --green: #00c896;
-    --green-glow: rgba(0,200,150,0.12);
-    --amber: #f0a500;
-    --red: #e85555;
-    --text: #c8d4e8;
-    --text-dim: #4a5a72;
-    --text-muted: #2a3548;
-    --mono: 'Share Tech Mono', monospace;
-    --display: 'Syne', sans-serif;
-  }
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--mono);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Animated scanline */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px);
-    pointer-events: none;
-    z-index: 999;
-  }
-
-  /* Grid background */
-  .grid-bg {
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(45,125,210,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(45,125,210,0.03) 1px, transparent 1px);
-    background-size: 48px 48px;
-    pointer-events: none;
-  }
-
-  .grid-bg::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(45,125,210,0.06) 0%, transparent 70%);
-  }
-
-  /* ─── NAV ─── */
-  nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-    background: rgba(8,10,13,0.92);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    padding: 0 32px;
-    height: 56px;
-    gap: 0;
-  }
-
-  .nav-logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-right: auto;
-    text-decoration: none;
-  }
-
-  .nav-logo-mark {
-    width: 30px;
-    height: 30px;
-    border: 1.5px solid var(--blue);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    color: var(--blue);
-    position: relative;
-  }
-
-  .nav-logo-mark::before {
-    content: '';
-    position: absolute;
-    inset: 3px;
-    border: 1px solid rgba(45,125,210,0.3);
-  }
-
-  .nav-logo-name {
-    font-family: var(--display);
-    font-weight: 800;
-    font-size: 15px;
-    letter-spacing: 0.12em;
-    color: var(--text);
-    text-transform: uppercase;
-  }
-
-  .nav-badge {
-    font-family: var(--mono);
-    font-size: 8px;
-    letter-spacing: 0.15em;
-    color: var(--blue);
-    border: 1px solid var(--blue);
-    padding: 2px 6px;
-    margin-left: 6px;
-  }
-
-  .nav-links {
-    display: flex;
-    gap: 0;
-    list-style: none;
-  }
-
-  .nav-links a {
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    color: var(--text-dim);
-    text-decoration: none;
-    padding: 0 18px;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    border-right: 1px solid var(--border);
-    transition: color 0.2s, background 0.2s;
-    text-transform: uppercase;
-  }
-
-  .nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.02); }
-  .nav-links a:first-child { border-left: 1px solid var(--border); }
-
-  .nav-cta {
-    margin-left: 20px;
-    background: rgba(45,125,210,0.12);
-    border: 1px solid var(--blue);
-    color: #7ab8f5 !important;
-    padding: 0 20px !important;
-    transition: background 0.2s !important;
-  }
-  .nav-cta:hover { background: rgba(45,125,210,0.25) !important; }
-
-  /* ─── HERO ─── */
-  .hero {
-    padding-top: 56px;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-
-  .hero-inner {
-    max-width: 1200px;
-    width: 100%;
-    padding: 80px 48px 60px;
-    display: grid;
-    grid-template-columns: 1fr 420px;
-    gap: 80px;
-    align-items: center;
-  }
-
-  .hero-eyebrow {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 28px;
-    opacity: 0;
-    animation: fadeUp 0.6s 0.1s forwards;
-  }
-
-  .hero-eyebrow-line {
-    width: 32px;
-    height: 1px;
-    background: var(--blue);
-  }
-
-  .hero-eyebrow span {
-    font-size: 9px;
-    letter-spacing: 0.25em;
-    color: var(--blue);
-    text-transform: uppercase;
-  }
-
-  .hero-title {
-    font-family: var(--display);
-    font-size: 58px;
-    font-weight: 800;
-    line-height: 1.0;
-    letter-spacing: -0.01em;
-    margin-bottom: 24px;
-    opacity: 0;
-    animation: fadeUp 0.6s 0.2s forwards;
-  }
-
-  .hero-title span { color: var(--blue); }
-  .hero-title em { font-style: normal; color: var(--green); }
-
-  .hero-sub {
-    font-size: 13px;
-    line-height: 1.8;
-    color: var(--text-dim);
-    margin-bottom: 40px;
-    max-width: 460px;
-    opacity: 0;
-    animation: fadeUp 0.6s 0.3s forwards;
-  }
-
-  .hero-actions {
-    display: flex;
-    gap: 12px;
-    opacity: 0;
-    animation: fadeUp 0.6s 0.4s forwards;
-  }
-
-  .btn-primary {
-    background: rgba(45,125,210,0.15);
-    border: 1px solid var(--blue);
-    color: #7ab8f5;
-    padding: 12px 28px;
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    cursor: pointer;
-    font-family: var(--mono);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: background 0.2s;
-  }
-  .btn-primary:hover { background: rgba(45,125,210,0.28); }
-
-  .btn-secondary {
-    background: transparent;
-    border: 1px solid var(--border2);
-    color: var(--text-dim);
-    padding: 12px 28px;
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    cursor: pointer;
-    font-family: var(--mono);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
-  }
-  .btn-secondary:hover { color: var(--text); border-color: var(--text-dim); }
-
-  .hero-stats {
-    display: flex;
-    gap: 32px;
-    margin-top: 48px;
-    padding-top: 32px;
-    border-top: 1px solid var(--border);
-    opacity: 0;
-    animation: fadeUp 0.6s 0.5s forwards;
-  }
-
-  .hero-stat-val {
-    font-family: var(--display);
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 4px;
-  }
-
-  .hero-stat-label {
-    font-size: 9px;
-    letter-spacing: 0.15em;
-    color: var(--text-dim);
-    text-transform: uppercase;
-  }
-
-  /* Terminal card */
-  .terminal {
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    opacity: 0;
-    animation: fadeUp 0.6s 0.3s forwards;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .terminal::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--blue), var(--green));
-  }
-
-  .terminal-bar {
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border);
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .t-dot { width: 9px; height: 9px; border-radius: 50%; }
-  .t-dot-r { background: #e85555; }
-  .t-dot-y { background: #f0a500; }
-  .t-dot-g { background: #00c896; }
-
-  .terminal-title {
-    font-size: 10px;
-    color: var(--text-dim);
-    margin-left: auto;
-    letter-spacing: 0.1em;
-  }
-
-  .terminal-body {
-    padding: 20px;
-    font-size: 11px;
-    line-height: 2;
-  }
-
-  .t-line { display: flex; align-items: flex-start; gap: 8px; }
-  .t-prompt { color: var(--green); flex-shrink: 0; }
-  .t-cmd { color: var(--text); }
-  .t-out { color: var(--text-dim); padding-left: 16px; }
-  .t-success { color: var(--green); padding-left: 16px; }
-  .t-blue { color: var(--blue); }
-  .t-amber { color: var(--amber); }
-  .t-cursor {
-    display: inline-block;
-    width: 7px;
-    height: 13px;
-    background: var(--blue);
-    animation: blink 1s step-end infinite;
-    vertical-align: middle;
-    margin-left: 4px;
-  }
-
-  /* ─── FEATURES ─── */
-  .section {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 100px 48px;
-  }
-
-  .section-header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    margin-bottom: 52px;
-  }
-
-  .section-label {
-    font-size: 9px;
-    letter-spacing: 0.25em;
-    color: var(--blue);
-    text-transform: uppercase;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .section-label::before { content: ''; width: 24px; height: 1px; background: var(--blue); }
-
-  .section-title {
-    font-family: var(--display);
-    font-size: 36px;
-    font-weight: 800;
-    color: var(--text);
-    line-height: 1.1;
-  }
-
-  .section-title span { color: var(--blue); }
-
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background: var(--border);
-    border: 1px solid var(--border);
-  }
-
-  .feature-card {
-    background: var(--surface);
-    padding: 32px;
-    position: relative;
-    overflow: hidden;
-    transition: background 0.2s;
-  }
-
-  .feature-card:hover { background: var(--surface2); }
-
-  .feature-card::after {
-    content: attr(data-num);
-    position: absolute;
-    bottom: -10px;
-    right: 12px;
-    font-family: var(--display);
-    font-size: 72px;
-    font-weight: 800;
-    color: var(--border2);
-    line-height: 1;
-    pointer-events: none;
-    transition: color 0.2s;
-  }
-  .feature-card:hover::after { color: var(--border); }
-
-  .feature-icon {
-    width: 36px;
-    height: 36px;
-    border: 1px solid var(--border2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    margin-bottom: 20px;
-    color: var(--blue);
-  }
-
-  .feature-title {
-    font-family: var(--display);
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 10px;
-    letter-spacing: 0.02em;
-  }
-
-  .feature-desc {
-    font-size: 11px;
-    line-height: 1.8;
-    color: var(--text-dim);
-  }
-
-  /* ─── FILE TREE ─── */
-  .tree-section {
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    padding: 80px 0;
-  }
-
-  .tree-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 48px;
-    display: grid;
-    grid-template-columns: 1fr 560px;
-    gap: 80px;
-    align-items: start;
-  }
-
-  .tree-root {
-    font-size: 12px;
-    line-height: 1;
-    user-select: none;
-  }
-
-  .tree-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 5px 8px;
-    cursor: pointer;
-    border-radius: 0;
-    transition: background 0.15s;
-    position: relative;
-    color: var(--text-dim);
-  }
-
-  .tree-item:hover { background: rgba(45,125,210,0.06); color: var(--text); }
-  .tree-item.active { background: rgba(45,125,210,0.1); color: var(--blue); }
-
-  .tree-indent { padding-left: 20px; }
-  .tree-indent2 { padding-left: 40px; }
-
-  .tree-icon { font-size: 13px; flex-shrink: 0; }
-  .tree-name { font-size: 11px; letter-spacing: 0.04em; flex: 1; }
-  .tree-badge {
-    font-size: 8px;
-    letter-spacing: 0.1em;
-    padding: 1px 5px;
-    border: 1px solid;
-    color: var(--green);
-    border-color: var(--green);
-    background: rgba(0,200,150,0.06);
-  }
-
-  .tree-connector {
-    position: absolute;
-    left: 16px;
-    top: 0; bottom: 0;
-    width: 1px;
-    background: var(--border2);
-  }
-
-  /* Detail panel */
-  .detail-panel {
-    background: var(--bg);
-    border: 1px solid var(--border2);
-    position: sticky;
-    top: 80px;
-  }
-
-  .detail-panel::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--blue);
-  }
-
-  .detail-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .detail-icon { font-size: 18px; }
-  .detail-name { font-family: var(--display); font-size: 14px; font-weight: 600; color: var(--text); }
-  .detail-path { font-size: 9px; color: var(--text-dim); letter-spacing: 0.08em; margin-top: 2px; }
-
-  .detail-body { padding: 20px; }
-
-  .detail-desc {
-    font-size: 11px;
-    line-height: 1.8;
-    color: var(--text-dim);
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .detail-meta {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-
-  .meta-item {}
-  .meta-key { font-size: 9px; letter-spacing: 0.15em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
-  .meta-val { font-size: 11px; color: var(--text-dim); }
-  .meta-val.green { color: var(--green); }
-  .meta-val.blue { color: var(--blue); }
-
-  .detail-files {
-    border-top: 1px solid var(--border);
-    padding-top: 16px;
-  }
-
-  .detail-files-label {
-    font-size: 9px;
-    letter-spacing: 0.15em;
-    color: var(--text-dim);
-    margin-bottom: 10px;
-    text-transform: uppercase;
-  }
-
-  .file-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 9px;
-    padding: 3px 8px;
-    border: 1px solid var(--border2);
-    color: var(--text-dim);
-    margin: 3px;
-    letter-spacing: 0.06em;
-    cursor: default;
-    transition: border-color 0.15s, color 0.15s;
-  }
-  .file-chip:hover { border-color: var(--blue); color: var(--text); }
-
-  /* ─── ROLES ─── */
-  .roles-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-  }
-
-  .role-card {
-    border: 1px solid var(--border);
-    padding: 28px;
-    position: relative;
-    background: var(--surface);
-    transition: border-color 0.2s;
-  }
-
-  .role-card:hover { border-color: var(--border2); }
-
-  .role-card.admin { border-top-color: var(--amber); }
-  .role-card.hradmin { border-top-color: var(--blue); }
-  .role-card.employee { border-top-color: var(--green); }
-
-  .role-tag {
-    font-size: 9px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .role-card.admin .role-tag { color: var(--amber); }
-  .role-card.hradmin .role-tag { color: var(--blue); }
-  .role-card.employee .role-tag { color: var(--green); }
-
-  .role-name {
-    font-family: var(--display);
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 6px;
-  }
-
-  .role-email {
-    font-size: 10px;
-    color: var(--text-dim);
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border);
-    letter-spacing: 0.04em;
-  }
-
-  .role-perm {
-    font-size: 10px;
-    line-height: 2;
-    color: var(--text-dim);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .perm-yes { color: var(--green); }
-  .perm-no { color: var(--text-muted); text-decoration: line-through; }
-
-  /* ─── API SECTION ─── */
-  .api-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-  }
-
-  .api-group {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    overflow: hidden;
-  }
-
-  .api-group-header {
-    background: var(--surface2);
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    color: var(--blue);
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .api-endpoint {
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: background 0.15s;
-  }
-  .api-endpoint:hover { background: rgba(45,125,210,0.05); }
-  .api-endpoint:last-child { border-bottom: none; }
-
-  .method {
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    padding: 2px 6px;
-    border: 1px solid;
-    min-width: 42px;
-    text-align: center;
-  }
-  .method-get { color: var(--green); border-color: var(--green); background: rgba(0,200,150,0.06); }
-  .method-post { color: var(--blue); border-color: var(--blue); background: rgba(45,125,210,0.06); }
-  .method-put { color: var(--amber); border-color: var(--amber); background: rgba(240,165,0,0.06); }
-  .method-delete { color: var(--red); border-color: var(--red); background: rgba(232,85,85,0.06); }
-
-  .endpoint-path { font-size: 11px; color: var(--text-dim); flex: 1; }
-  .endpoint-note { font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em; }
-
-  /* ─── STACK SECTION ─── */
-  .stack-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-  }
-
-  .stack-col {
-    background: var(--surface);
-    border: 1px solid var(--border);
-  }
-
-  .stack-col-header {
-    padding: 14px 20px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface2);
-    font-size: 11px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .be-col .stack-col-header { color: var(--amber); }
-  .fe-col .stack-col-header { color: var(--blue); }
-
-  .stack-item {
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: background 0.15s;
-  }
-  .stack-item:hover { background: rgba(255,255,255,0.02); }
-  .stack-item:last-child { border-bottom: none; }
-
-  .stack-name { font-size: 12px; color: var(--text); }
-  .stack-role { font-size: 10px; color: var(--text-dim); }
-
-  /* ─── FOOTER ─── */
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 32px 48px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    max-width: 1200px;
-    margin: 0 auto;
-    gap: 20px;
-  }
-
-  .footer-copy {
-    font-size: 10px;
-    color: var(--text-dim);
-    letter-spacing: 0.1em;
-  }
-
-  .footer-links {
-    display: flex;
-    gap: 20px;
-  }
-
-  .footer-links a {
-    font-size: 9px;
-    letter-spacing: 0.12em;
-    color: var(--text-dim);
-    text-decoration: none;
-    text-transform: uppercase;
-    transition: color 0.2s;
-  }
-  .footer-links a:hover { color: var(--text); }
-
-  .status-dot {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 9px;
-    color: var(--green);
-    letter-spacing: 0.12em;
-  }
-  .status-dot::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--green);
-    animation: pulse 2s ease-in-out infinite;
-  }
-
-  /* ─── ANIMATIONS ─── */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(18px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,200,150,0.4); }
-    50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(0,200,150,0); }
-  }
-
-  .reveal {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.5s, transform 0.5s;
-  }
-  .reveal.visible { opacity: 1; transform: none; }
-
-  /* Divider */
-  .divider {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 0;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Portal</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h2 {
+            color: #007bff;
+        }
+        .admin-controls {
+            border: 1px dashed #007bff;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #fff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        button {
+            padding: 5px 10px;
+            margin-right: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .edit-button {
+            background-color: red;
+        }
+        .edit-button:hover {
+            background-color: darkred;
+        }
+        #pdfViewer {
+            display: none;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+            background-color: #fff;
+        }
+    </style>
 </head>
 <body>
+    <div id="app"></div>
+    <div id="pdfViewer"></div>
+    <script>
+        let token = null;
 
-<div class="grid-bg"></div>
+        async function register(username, password) {
+            const response = await fetch('http://localhost:5000/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            return response.ok;
+        }
 
-<!-- NAV -->
-<nav>
-  <a href="#" class="nav-logo">
-    <div class="nav-logo-mark">◈</div>
-    <span class="nav-logo-name">Intranet</span>
-    <span class="nav-badge">PORTAL</span>
-  </a>
-  <ul class="nav-links">
-    <li><a href="#features">Features</a></li>
-    <li><a href="#structure">Structure</a></li>
-    <li><a href="#roles">Roles</a></li>
-    <li><a href="#api">API</a></li>
-    <li><a href="#stack">Stack</a></li>
-    <li><a href="#" class="nav-cta">LAUNCH APP →</a></li>
-  </ul>
-</nav>
+        async function login(username, password) {
+            const response = await fetch('http://localhost:5000/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                token = data.token;
+                loadDocuments();
+            } else {
+                alert('Login failed');
+            }
+        }
 
-<!-- HERO -->
-<section class="hero" id="home">
-  <div class="hero-inner">
-    <div>
-      <div class="hero-eyebrow">
-        <div class="hero-eyebrow-line"></div>
-        <span>Secure · Role-Based · Compliant</span>
-      </div>
-      <h1 class="hero-title">Official<br/><span>Document</span><br/><em>Management</em></h1>
-      <p class="hero-sub">Enterprise-grade intranet portal with read-only PDF protection, JWT authentication, role-based access control, full audit logging, and compliance acknowledgment tracking.</p>
-      <div class="hero-actions">
-        <a href="#structure" class="btn-primary">◈ EXPLORE STRUCTURE</a>
-        <a href="intranet portal.jsx" class="btn-secondary">↓ QUICK START</a>
-      </div>
-      <div class="hero-stats">
-        <div>
-          <div class="hero-stat-val">3</div>
-          <div class="hero-stat-label">User Roles</div>
-        </div>
-        <div>
-          <div class="hero-stat-val">12+</div>
-          <div class="hero-stat-label">API Endpoints</div>
-        </div>
-        <div>
-          <div class="hero-stat-val">100%</div>
-          <div class="hero-stat-label">Audit Logged</div>
-        </div>
-        <div>
-          <div class="hero-stat-val">JWT</div>
-          <div class="hero-stat-label">Auth Method</div>
-        </div>
-      </div>
-    </div>
+        async function uploadDocument(file) {
+            const formData = new FormData();
+            formData.append('document', file);
 
-    <!-- Terminal -->
-    <div class="terminal">
-      <div class="terminal-bar">
-        <div class="t-dot t-dot-r"></div>
-        <div class="t-dot t-dot-y"></div>
-        <div class="t-dot t-dot-g"></div>
-        <div class="terminal-title">bash — intranet-portal</div>
-      </div>
-      <div class="terminal-body">
-        <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd">docker-compose up -d</span></div>
-        <div class="t-line t-out t-success">✓ postgres container started</div>
-        <div style="height:6px"></div>
-        <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd">cd backend && python seed_db.py</span></div>
-        <div class="t-line t-out t-success">✓ database initialized</div>
-        <div class="t-line t-out t-success">✓ demo users created</div>
-        <div style="height:6px"></div>
-        <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd">python main.py</span></div>
-        <div class="t-line t-out"><span class="t-blue">INFO:</span>     Uvicorn running</div>
-        <div class="t-line t-out"><span class="t-blue">INFO:</span>     http://0.0.0.0:<span class="t-amber">8000</span></div>
-        <div style="height:6px"></div>
-        <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd">cd ../frontend && npm run dev</span></div>
-        <div class="t-line t-out t-success">✓ VITE v5.0 ready</div>
-        <div class="t-line t-out"><span class="t-blue">➜</span> Local: http://localhost:<span class="t-amber">5173</span></div>
-        <div style="height:6px"></div>
-        <div class="t-line"><span class="t-prompt">$</span><span class="t-cursor"></span></div>
-      </div>
-    </div>
-  </div>
-</section>
+            const response = await fetch('http://localhost:5000/api/upload', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            return response.ok;
+        }
 
-<hr class="divider" />
+        async function loadDocuments() {
+            const response = await fetch('http://localhost:5000/api/documents', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const documents = await response.json();
+            renderDocuments(documents);
+        }
 
-<!-- FEATURES -->
-<section class="section reveal" id="features">
-  <div class="section-header">
-    <div>
-      <div class="section-label">Core Capabilities</div>
-      <h2 class="section-title">Built for<br/><span>Enterprise Security</span></h2>
-    </div>
-  </div>
-  <div class="features-grid">
-    <div class="feature-card" data-num="01">
-      <div class="feature-icon">⬢</div>
-      <div class="feature-title">Role-Based Access</div>
-      <p class="feature-desc">Three distinct roles — IT Admin, HR Admin, and Employee — with granular permissions enforced at every API endpoint. JWT tokens with 30-minute expiry ensure session security.</p>
-    </div>
-    <div class="feature-card" data-num="02">
-      <div class="feature-icon">◈</div>
-      <div class="feature-title">Read-Only PDFs</div>
-      <p class="feature-desc">Every uploaded document is programmatically protected with pikepdf. Owner passwords, permission flags, and optional user watermarks prevent unauthorized modification.</p>
-    </div>
-    <div class="feature-card" data-num="03">
-      <div class="feature-icon">◎</div>
-      <div class="feature-title">Full Audit Trail</div>
-      <p class="feature-desc">Every VIEW, DOWNLOAD, UPLOAD, and DELETE action is logged with user ID, IP address, user-agent, and timestamp. Immutable compliance records out of the box.</p>
-    </div>
-    <div class="feature-card" data-num="04">
-      <div class="feature-icon">◇</div>
-      <div class="feature-title">Compliance Acks</div>
-      <p class="feature-desc">Mark documents as requiring acknowledgment. Employees must explicitly confirm they've read critical policies. Track completion status per document per user.</p>
-    </div>
-    <div class="feature-card" data-num="05">
-      <div class="feature-icon">▦</div>
-      <div class="feature-title">Version Control</div>
-      <p class="feature-desc">Automatic version history tracks every document revision with change logs and creator attribution. Soft deletes preserve data integrity with full archive recovery.</p>
-    </div>
-    <div class="feature-card" data-num="06">
-      <div class="feature-icon">⬡</div>
-      <div class="feature-title">Smart Search</div>
-      <p class="feature-desc">Filter documents by title, tags, department, and type. Department-scoped views ensure employees only surface relevant documents from their teams.</p>
-    </div>
-  </div>
-</section>
+        function renderDocuments(documents) {
+            const appDiv = document.getElementById('app');
+            appDiv.innerHTML = `
+                <h2>Official Company Intranet</h2>
+                <input type="file" id="fileInput" />
+                <button onclick="handleUpload()">Upload Document</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Document Name</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${documents.map(doc => `
+                            <tr>
+                                <td>${doc.title}</td>
+                                <td>
+                                    <button onclick="viewDocument('${doc.title}')">View</button>
+                                    <button onclick="downloadDocument('${doc.title}')">Download</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
 
-<!-- FILE TREE -->
-<div class="tree-section" id="structure">
-  <div class="tree-inner">
-    <div>
-      <div class="section-label reveal">Project Structure</div>
-      <h2 class="section-title reveal" style="margin-bottom:32px;">Explore the<br/><span>Codebase</span></h2>
-      <p style="font-size:11px;color:var(--text-dim);line-height:1.8;margin-bottom:36px;" class="reveal">
-        Click any folder or file to see its description, responsibilities, and key files. The project follows a clean separation between frontend SPA and backend API service.
-      </p>
-      <div class="tree-root reveal" id="fileTree">
-        <!-- Generated by JS -->
-      </div>
-    </div>
-    <div class="detail-panel" id="detailPanel">
-      <div class="detail-header">
-        <div class="detail-icon" id="detailIcon">◈</div>
-        <div>
-          <div class="detail-name" id="detailName">Select a folder</div>
-          <div class="detail-path" id="detailPath">Click any item in the tree →</div>
-        </div>
-      </div>
-      <div class="detail-body">
-        <div class="detail-desc" id="detailDesc">
-          Browse the project structure on the left. Click any file or folder to view its description, technical details, and contents.
-        </div>
-        <div class="detail-meta" id="detailMeta"></div>
-        <div class="detail-files" id="detailFiles" style="display:none">
-          <div class="detail-files-label">Key Files</div>
-          <div id="detailFileChips"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+        function handleUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            uploadDocument(file).then(success => {
+                if (success) {
+                    alert('Upload successful');
+                    loadDocuments();
+                } else {
+                    alert('Upload failed');
+                }
+            });
+        }
 
-<!-- ROLES -->
-<section class="section reveal" id="roles">
-  <div class="section-header">
-    <div>
-      <div class="section-label">Access Control</div>
-      <h2 class="section-title">Three Roles,<br/><span>Clear Boundaries</span></h2>
-    </div>
-  </div>
-  <div class="roles-grid">
-    <div class="role-card admin">
-      <div class="role-tag">◈ IT ADMIN</div>
-      <div class="role-name">IT Admin</div>
-      <div class="role-email">admin@company.com · password123</div>
-      <div class="role-perm"><span class="perm-yes">✓</span> Upload documents</div>
-      <div class="role-perm"><span class="perm-yes">✓</span> Edit metadata</div>
-      <div class="role-perm"><span class="perm-yes">✓</span> Archive documents</div>
-      <div class="role-perm"><span class="perm-yes">✓</span> View audit logs</div>
-      <div class="role-perm"><span class="perm-yes">✓</span> Set permissions</div>
-      <div class="role-perm"><span class="perm-yes">✓</span> View & download</div>
-    </div>
-    <div class="role-card hradmin">
-      <div class="role-tag">◈ HR ADMIN</div>
-      <div class="role-name">HR Admin</div>
-      <div class="role-email">hr@company.com · password123</div>
-      <div class="role-perm"><span class="perm-yes">✓</span> Upload documents</div>
-      <div class="role-perm"><span class="perm-yes">✓</span> Edit metadata</div>
-      <div class="role-perm"><span class="perm-yes">✓</span> Archive documents</div>
-      <div class="role-perm"><span class="perm-yes">✓</span> View audit logs</div>
-      <div class="role-perm"><span class="perm-yes">✓</span> Set permissions</div>
-      <div class="role-perm"><span class="perm-yes">✓</span> View & download</div>
-    </div>
-    <div class="role-card employee">
-      <div class="role-tag">◈ EMPLOYEE</div>
-      <div class="role-name">Employee</div>
-      <div class="role-email">john.doe@company.com · password123</div>
-      <div class="role-perm"><span class="perm-no">✗</span> Upload documents</div>
-      <div class="role-perm"><span class="perm-no">✗</span> Edit metadata</div>
-      <div class="role-perm"><span class="perm-no">✗</span> Archive documents</div>
-      <div class="role-perm"><span class="perm-no">✗</span> View audit logs</div>
-      <div class="role-perm"><span class="perm-yes">✓</span> View & print</div>
-      <div class="role-perm"><span class="perm-yes">✓</span> Download (read-only)</div>
-    </div>
-  </div>
-</section>
+        function viewDocument(title) {
+            const pdfViewer = document.getElementById('pdfViewer');
+            pdfViewer.innerHTML = ''; // Clear previous content
+            pdfViewer.style.display = 'block'; // Show viewer
 
-<!-- API -->
-<div style="background: var(--surface); border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
-  <section class="section reveal" id="api">
-    <div class="section-header">
-      <div>
-        <div class="section-label">REST Endpoints</div>
-        <h2 class="section-title">API<br/><span>Reference</span></h2>
-      </div>
-    </div>
-    <div class="api-grid">
-      <div class="api-group">
-        <div class="api-group-header">◎ Authentication</div>
-        <div class="api-endpoint">
-          <span class="method method-post">POST</span>
-          <span class="endpoint-path">/api/auth/register</span>
-          <span class="endpoint-note">Create user</span>
-        </div>
-        <div class="api-endpoint">
-          <span class="method method-post">POST</span>
-          <span class="endpoint-path">/api/auth/login</span>
-          <span class="endpoint-note">Get JWT token</span>
-        </div>
-        <div class="api-endpoint">
-          <span class="method method-get">GET</span>
-          <span class="endpoint-path">/api/auth/me</span>
-          <span class="endpoint-note">Current user</span>
-        </div>
-      </div>
-      <div class="api-group">
-        <div class="api-group-header">◈ Documents</div>
-        <div class="api-endpoint">
-          <span class="method method-get">GET</span>
-          <span class="endpoint-path">/api/documents/</span>
-          <span class="endpoint-note">List + search</span>
-        </div>
-        <div class="api-endpoint">
-          <span class="method method-get">GET</span>
-          <span class="endpoint-path">/api/documents/{id}</span>
-          <span class="endpoint-note">Get details</span>
-        </div>
-        <div class="api-endpoint">
-          <span class="method method-post">POST</span>
-          <span class="endpoint-path">/api/documents/upload</span>
-          <span class="endpoint-note">Admin only</span>
-        </div>
-        <div class="api-endpoint">
-          <span class="method method-put">PUT</span>
-          <span class="endpoint-path">/api/documents/{id}</span>
-          <span class="endpoint-note">Admin only</span>
-        </div>
-        <div class="api-endpoint">
-          <span class="method method-delete">DEL</span>
-          <span class="endpoint-path">/api/documents/{id}</span>
-          <span class="endpoint-note">Soft archive</span>
-        </div>
-        <div class="api-endpoint">
-          <span class="method method-get">GET</span>
-          <span class="endpoint-path">/api/documents/{id}/download</span>
-          <span class="endpoint-note">Protected PDF</span>
-        </div>
-      </div>
-      <div class="api-group">
-        <div class="api-group-header">◇ Acknowledgments</div>
-        <div class="api-endpoint">
-          <span class="method method-post">POST</span>
-          <span class="endpoint-path">/api/acknowledgments/{id}/acknowledge</span>
-          <span class="endpoint-note">Sign off</span>
-        </div>
-        <div class="api-endpoint">
-          <span class="method method-get">GET</span>
-          <span class="endpoint-path">/api/acknowledgments/document/{id}/status</span>
-          <span class="endpoint-note">Check status</span>
-        </div>
-      </div>
-      <div class="api-group">
-        <div class="api-group-header">▦ Audit</div>
-        <div class="api-endpoint">
-          <span class="method method-get">GET</span>
-          <span class="endpoint-path">/api/audit/logs</span>
-          <span class="endpoint-note">Admin only</span>
-        </div>
-        <div class="api-endpoint">
-          <span class="method method-get">GET</span>
-          <span class="endpoint-path">/api/audit/logs/{user_id}</span>
-          <span class="endpoint-note">User history</span>
-        </div>
-      </div>
-    </div>
-  </section>
-</div>
+            const loadingTask = pdfjsLib.getDocument(`http://localhost:5000/${title}`);
+            loadingTask.promise.then(pdf => {
+                pdf.getPage(1).then(page => {
+                    const scale = 1.5;
+                    const viewport = page.getViewport({ scale: scale });
 
-<!-- STACK -->
-<section class="section reveal" id="stack">
-  <div class="section-header">
-    <div>
-      <div class="section-label">Technology</div>
-      <h2 class="section-title">Full<br/><span>Stack</span></h2>
-    </div>
-  </div>
-  <div class="stack-grid">
-    <div class="stack-col be-col">
-      <div class="stack-col-header">⬢ BACKEND · Python</div>
-      <div class="stack-item"><span class="stack-name">FastAPI</span><span class="stack-role">Async REST framework</span></div>
-      <div class="stack-item"><span class="stack-name">SQLAlchemy</span><span class="stack-role">ORM / query builder</span></div>
-      <div class="stack-item"><span class="stack-name">PostgreSQL</span><span class="stack-role">Relational database</span></div>
-      <div class="stack-item"><span class="stack-name">pikepdf</span><span class="stack-role">PDF protection engine</span></div>
-      <div class="stack-item"><span class="stack-name">python-jose</span><span class="stack-role">JWT signing & validation</span></div>
-      <div class="stack-item"><span class="stack-name">bcrypt</span><span class="stack-role">Password hashing</span></div>
-      <div class="stack-item"><span class="stack-name">Pydantic v2</span><span class="stack-role">Schema validation</span></div>
-      <div class="stack-item"><span class="stack-name">Docker</span><span class="stack-role">DB containerization</span></div>
-    </div>
-    <div class="stack-col fe-col">
-      <div class="stack-col-header">◈ FRONTEND · JavaScript</div>
-      <div class="stack-item"><span class="stack-name">React 18</span><span class="stack-role">UI component library</span></div>
-      <div class="stack-item"><span class="stack-name">React Router v6</span><span class="stack-role">Client-side routing</span></div>
-      <div class="stack-item"><span class="stack-name">Axios</span><span class="stack-role">HTTP client w/ interceptors</span></div>
-      <div class="stack-item"><span class="stack-name">Zustand</span><span class="stack-role">Lightweight state mgmt</span></div>
-      <div class="stack-item"><span class="stack-name">Vite</span><span class="stack-role">Build tool & dev server</span></div>
-    </div>
-  </div>
-</section>
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    pdfViewer.appendChild(canvas);
 
-<!-- FOOTER -->
-<hr class="divider" />
-<div style="max-width:1200px;margin:0 auto;">
-  <footer>
-    <div class="footer-copy">© Intranet Portal · Internal Use Only · All Rights Reserved</div>
-    <div class="status-dot">SYSTEM OPERATIONAL</div>
-    <div class="footer-links">
-      <a href="#">Setup Guide</a>
-      <a href="#">API Docs</a>
-      <a href="#">Changelog</a>
-    </div>
-  </footer>
-</div>
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    page.render(renderContext);
+                });
+            });
+        }
 
-<script>
-// ─── FILE TREE DATA ───────────────────────────────────────────────────
-const treeData = [
-  {
-    id: "root", icon: "◈", name: "Intranet-for-Document/", type: "root",
-    desc: "Root project directory containing the full-stack intranet application. Includes backend API service, React frontend SPA, Docker configuration, and documentation.",
-    meta: [["Type","Root Directory"],["Stack","FastAPI + React"],["DB","PostgreSQL"],["Auth","JWT RBAC"]],
-    files: ["docker-compose.yml","SETUP.md","README.md",".gitignore"],
-    children: [
-      {
-        id: "backend", icon: "⬢", name: "backend/", type: "folder",
-        desc: "Python FastAPI backend service. Handles all business logic, database operations, PDF security processing, JWT authentication, and REST API routing.",
-        meta: [["Framework","FastAPI"],["ORM","SQLAlchemy"],["Port","8000"],["Auth","JWT / bcrypt"]],
-        files: ["main.py","requirements.txt",".env","seed_db.py"],
-        children: [
-          {
-            id: "app", icon: "▦", name: "app/", type: "folder",
-            desc: "Core application package. Contains all modular components of the FastAPI application organized by responsibility.",
-            meta: [["Pattern","Layered Architecture"],["Modules","6 subpackages"]],
-            files: ["__init__.py","config.py"],
-            children: [
-              { id:"api", icon:"◎", name:"api/", type:"folder", desc:"REST API route handlers organized by resource. Each module defines endpoints, validates inputs via Pydantic schemas, and delegates to service layer.", meta:[["Auth","POST /auth, GET /auth/me"],["Documents","GET, POST, PUT, DELETE"],["Acks","POST /acknowledge"]], files:["auth.py","documents.py","acknowledgments.py","audit.py"] },
-              { id:"models", icon:"◇", name:"models/", type:"folder", desc:"SQLAlchemy ORM model definitions. Defines all database tables, column types, relationships, and constraints. Auto-generates schema via Alembic migrations.", meta:[["Tables","Users, Documents, Versions, AuditLogs, Acknowledgments"],["Relations","FK constraints + cascades"]], files:["user.py","document.py","document_version.py","audit_log.py","acknowledgment.py"] },
-              { id:"schemas", icon:"◈", name:"schemas/", type:"folder", desc:"Pydantic v2 request/response schemas for data validation, serialization, and OpenAPI documentation. Ensures type safety at API boundaries.", meta:[["Validation","Pydantic v2"],["Usage","Request body + response models"]], files:["user.py","document.py","auth.py","audit.py"] },
-              { id:"services", icon:"⬡", name:"services/", type:"folder", desc:"Business logic layer. Includes PDF processing service (pikepdf encryption, watermarking, validation), document CRUD service, and user management. Decoupled from HTTP layer.", meta:[["PDF Engine","pikepdf"],["Features","Encryption, watermark, validation"]], files:["pdf_service.py","document_service.py","user_service.py"] },
-              { id:"middleware", icon:"▦", name:"middleware/", type:"folder", desc:"HTTP middleware stack. Configures CORS origins, request/response logging, error formatting, and audit log middleware that fires on every protected request.", meta:[["CORS","Configured origins"],["Logging","Request + audit events"]], files:["cors.py","logging.py","audit.py"] },
-              { id:"utils", icon:"◎", name:"utils/", type:"folder", desc:"Shared utility functions. JWT token creation, verification, and decoding. Password hashing helpers. Role-based dependency injection guards used by API routes.", meta:[["JWT Lib","python-jose"],["Expiry","30 minutes"],["Guards","require_admin, require_auth"]], files:["auth.py","helpers.py","guards.py"] },
-            ]
-          },
-          { id:"storage", icon:"◈", name:"storage/", type:"folder", desc:"Local filesystem storage for uploaded and processed PDF files. In production, this path should be replaced with an S3 bucket mount or object storage integration.", meta:[["Format","PDF only"],["Security","pikepdf-encrypted on write"],["TODO","S3 integration"]], files:["[uploaded PDFs]"] },
-        ]
-      },
-      {
-        id: "frontend", icon: "◇", name: "frontend/", type: "folder",
-        desc: "React 18 single-page application. Built with Vite, using React Router for navigation, Zustand for state, and Axios for authenticated API calls.",
-        meta: [["Framework","React 18"],["Build","Vite"],["Port","5173"],["State","Zustand"]],
-        files: ["package.json","vite.config.js",".env"],
-        children: [
-          {
-            id:"src", icon:"▦", name:"src/", type:"folder",
-            desc:"Frontend source code root. Organized into pages, reusable components, API service layer, and global state stores.",
-            meta:[["Entry","main.jsx"],["Router","React Router v6"]],
-            files:["main.jsx","App.jsx"],
-            children: [
-              { id:"pages", icon:"◎", name:"pages/", type:"folder", desc:"Top-level page components mapped to routes. Each page composes smaller components and calls service functions. Includes Login, Dashboard, Documents, AuditLogs, and Acknowledgments pages.", meta:[["Pages","Login, Dashboard, Documents, Audit, Acks"],["Auth","Protected route wrapper"]], files:["LoginPage.jsx","DashboardPage.jsx","DocumentsPage.jsx","AuditPage.jsx","AcknowledgmentsPage.jsx"] },
-              { id:"components", icon:"◈", name:"components/", type:"folder", desc:"Reusable UI components. Includes DocumentTable, FilterBar, DetailPanel, UploadModal, AuditLogTable, RoleBadge, and layout components like Sidebar and TopNav.", meta:[["Pattern","Presentational + Container"],["Styling","CSS Modules"]], files:["DocumentTable.jsx","UploadModal.jsx","Sidebar.jsx","TopNav.jsx","RoleBadge.jsx","DetailPanel.jsx"] },
-              { id:"services", icon:"⬡", name:"services/", type:"folder", desc:"API client layer. Axios instance with JWT Bearer interceptor, automatic token injection, 401 redirect handling, and typed service functions for each API resource.", meta:[["HTTP","Axios"],["Intercept","Auto-inject Bearer token"],["On 401","Redirect to login"]], files:["api.js","authService.js","documentService.js","auditService.js"] },
-              { id:"store", icon:"◇", name:"store/", type:"folder", desc:"Zustand global state stores. authStore holds JWT token and current user. documentStore caches document lists and selected doc. Persists auth token to localStorage.", meta:[["Lib","Zustand"],["Stores","authStore, documentStore"],["Persist","localStorage for JWT"]], files:["authStore.js","documentStore.js"] },
-              { id:"styles", icon:"▦", name:"styles/", type:"folder", desc:"Global CSS and CSS module files. Defines the design system tokens (colors, spacing, typography), base resets, and shared utility classes.", meta:[["Approach","CSS Modules + globals"],["Variables","CSS custom properties"]], files:["globals.css","variables.css","components.css"] },
-            ]
-          }
-        ]
-      },
-      { id:"compose", icon:"⬢", name:"docker-compose.yml", type:"file", desc:"Docker Compose configuration that spins up a PostgreSQL 15 container with persistent volume, correct port mapping (5432), environment variables, and a health check. Run `docker-compose up -d` to start.", meta:[["Service","postgres:15"],["Port","5432"],["Volume","pg_data (persistent)"],["Health","pg_isready check"]], files:[] },
-      { id:"setup", icon:"◎", name:"SETUP.md", type:"file", desc:"Step-by-step quick start guide. Covers prerequisites (Python 3.9+, Node 16+, Docker), database initialization, backend startup, frontend startup, and first login with demo accounts.", meta:[["Format","Markdown"],["Audience","Developers"],["Sections","5 setup steps"]], files:[] },
-    ]
-  }
-];
+        function downloadDocument(title) {
+            const link = document.createElement('a');
+            link.href = `http://localhost:5000/${title}`;
+            link.download = title;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
-// ─── RENDER TREE ─────────────────────────────────────────────────────
-const container = document.getElementById("fileTree");
-
-function renderTree(nodes, depth = 0) {
-  const ul = document.createElement("div");
-  nodes.forEach(node => {
-    const item = document.createElement("div");
-    item.className = `tree-item ${depth > 0 ? (depth === 1 ? "tree-indent" : "tree-indent2") : ""}`;
-    item.dataset.id = node.id;
-    item.innerHTML = `<span class="tree-icon">${node.icon}</span><span class="tree-name">${node.name}</span>${node.type === 'root' ? '<span class="tree-badge">ROOT</span>' : ''}`;
-    item.addEventListener("click", (e) => { e.stopPropagation(); selectNode(node); });
-    ul.appendChild(item);
-    if (node.children) ul.appendChild(renderTree(node.children, depth + 1));
-  });
-  return ul;
-}
-
-container.appendChild(renderTree(treeData));
-
-function selectNode(node) {
-  document.querySelectorAll(".tree-item").forEach(el => el.classList.remove("active"));
-  document.querySelector(`[data-id="${node.id}"]`)?.classList.add("active");
-  document.getElementById("detailIcon").textContent = node.icon;
-  document.getElementById("detailName").textContent = node.name;
-  document.getElementById("detailPath").textContent = getPath(node.id);
-  document.getElementById("detailDesc").textContent = node.desc;
-  const metaEl = document.getElementById("detailMeta");
-  metaEl.innerHTML = node.meta.map(([k,v]) => `<div class="meta-item"><div class="meta-key">${k}</div><div class="meta-val">${v}</div></div>`).join("");
-  const filesEl = document.getElementById("detailFiles");
-  const chipsEl = document.getElementById("detailFileChips");
-  if (node.files && node.files.length) {
-    filesEl.style.display = "block";
-    chipsEl.innerHTML = node.files.map(f => `<span class="file-chip">◈ ${f}</span>`).join("");
-  } else { filesEl.style.display = "none"; }
-}
-
-const paths = {
-  root:"Intranet-for-Document/", backend:"backend/", app:"backend/app/",
-  api:"backend/app/api/", models:"backend/app/models/", schemas:"backend/app/schemas/",
-  services:"backend/app/services/", middleware:"backend/app/middleware/", utils:"backend/app/utils/",
-  storage:"backend/storage/", frontend:"frontend/", src:"frontend/src/",
-  pages:"frontend/src/pages/", components:"frontend/src/components/",
-  services2:"frontend/src/services/", store:"frontend/src/store/", styles:"frontend/src/styles/",
-  compose:"docker-compose.yml", setup:"SETUP.md",
-};
-
-function getPath(id) {
-  return paths[id] || id;
-}
-
-// Select root by default
-selectNode(treeData[0]);
-
-// ─── SCROLL REVEAL ────────────────────────────────────────────────────
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("visible"); } });
-}, { threshold: 0.1 });
-
-document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
-</script>
+        // Example usage
+        // Uncomment to test login or registration
+        // login('username', 'password');
+        // register('newuser', 'password');
+    </script>
 </body>
 </html>
