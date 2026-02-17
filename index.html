@@ -1,13 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Intranet Document Portal</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="script.js" defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Management System</title>
+  <style>
+    :root {
+      --bg: #111827;
+      --fg: #f9fafb;
+      --muted: #9ca3af;
+      --border: #374151;
+      --border2: #4b5563;
+      --muted2: #6b7280;
+    }
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+    }
+    .app { display: flex; flex-direction: column; height: 100vh; }
+    .topbar { padding: 12px 24px; background:#1f2937; display:flex; justify-content:space-between; align-items:center; }
+    .sidebar { background:#1f2937; color:var(--muted); transition:width 0.3s; overflow:hidden; }
+    .sidebar.collapsed { width:52px; }
+    .sidebar button { display:block; width:100%; padding:10px; background:none; border:none; color:inherit; text-align:left; cursor:pointer; }
+    .sidebar button.active { background:#374151; color:#fff; }
+    .main-row { display:flex; flex:1; }
+    .content { flex:1; padding:20px; overflow-y:auto; }
+    .h1 { font-size:24px; margin-bottom:8px; }
+    .sub { font-size:12px; color:var(--muted2); margin-bottom:16px; }
+    .table { border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+    .btn-ack { cursor:pointer; background:#2563eb; color:#fff; border:none; border-radius:4px; }
+    .upload-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; }
+    .modal-content { background:#1f2937; padding:24px; border-radius:8px; width:320px; }
+    input, select { width:100%; margin-bottom:12px; padding:8px; border-radius:4px; border:none; }
+    button { cursor:pointer; border:none; border-radius:4px; padding:8px 12px; }
+  </style>
 </head>
 <body>
   <div id="app"></div>
+
+  <script>
+    // ===================== DATA =====================
+    const USERS = {
+      "admin@company.com": { role: "IT Admin", name: "Alex Mitchell", password: "password123", avatar: "AM" },
+      "hr@company.com": { role: "HR Admin", name: "Sarah Chen", password: "password123", avatar: "SC" },
+      "john.doe@company.com": { role: "Employee", name: "John Doe", password: "password123", avatar: "JD" },
+    };
+
+    const DOCUMENTS = [
+      { id: 1, title: "Employee Handbook 2025", dept: "HR", type: "Policy", version: "v3.2", date: "2025-01-15", tags: ["onboarding", "policy"], size: "2.4 MB", views: 142, status: "active", requiresAck: true },
+      { id: 2, title: "IT Security Guidelines", dept: "IT", type: "Security", version: "v2.1", date: "2025-02-01", tags: ["security", "compliance"], size: "1.8 MB", views: 87, status: "active", requiresAck: true },
+      { id: 3, title: "Remote Work Policy", dept: "HR", type: "Policy", version: "v1.5", date: "2025-01-28", tags: ["remote", "policy"], size: "890 KB", views: 211, status: "active", requiresAck: false },
+      { id: 4, title: "Data Retention Schedule", dept: "Legal", type: "Compliance", version: "v4.0", date: "2024-12-10", tags: ["compliance", "legal"], size: "3.1 MB", views: 56, status: "active", requiresAck: true },
+      { id: 5, title: "Benefits Enrollment Guide", dept: "HR", type: "Guide", version: "v2.3", date: "2025-01-05", tags: ["benefits", "enrollment"], size: "5.2 MB", views: 334, status: "active", requiresAck: false }
+    ];
+
+    const deptColors = { HR: "#3b82f6", IT: "#10b981", Legal: "#f59e0b", Finance: "#8b5cf6" };
+    const typeIcons = { Policy: "⬡", Security: "⬢", Compliance: "⬣", Guide: "◈", Procedure: "◇" };
+
+    let screen = "login";
+    let user = null;
+    let email="", password="", loginError="";
+    let activeNav="documents", search="", filterDept="All", filterType="All";
+    let selectedDoc = null, acknowledged = new Set();
+    let uploadModal=false, uploadName="", uploadDept="HR", uploadType="Policy", uploadSuccess=false;
+    let docs = [...DOCUMENTS];
+    let sidebarCollapsed = false;
+
+    function isAdmin() { return user && (user.role==="IT Admin" || user.role==="HR Admin"); }
+
+    function filteredDocs() {
+      return docs.filter(d=>{
+        const matchSearch = d.title.toLowerCase().includes(search.toLowerCase()) || d.tags.some(t=>t.toLowerCase().includes(search.toLowerCase()));
+        const matchDept = filterDept==="All" || d.dept===filterDept;
+        const matchType = filterType==="All" || d.type===filterType;
+        return matchSearch && matchDept && matchType && d.status==="active";
+      });
+    }
+
+    function handleLogin() {
+      const found = USERS[email];
+      if(found && found.password===password){ user={...found,email}; screen="app"; loginError=""; render();}
+      else{ loginError="Invalid credentials. Please try again."; render();}
+    }
+
+    function handleLogout(){ user=null; screen="login"; email=""; password=""; loginError=""; activeNav="documents"; render(); }
+
+    function handleUpload(){
+      if(!uploadName.trim()) return;
+      const newDoc = { id: docs.length+1, title: uploadName, dept: uploadDept, type: uploadType, version:"v1.0", date:new Date().toISOString().split("T")[0], tags:[uploadDept.toLowerCase(),uploadType.toLowerCase()], size:"1 MB", views:0, status:"active", requiresAck:false };
+      docs=[newDoc,...docs]; uploadSuccess=true; render();
+      setTimeout(()=>{ uploadModal=false; uploadSuccess=false; uploadName=""; render(); },1500);
+    }
+
+    function renderLogin(){ return `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;">
+        <h1>Login</h1>
+        <input type="text" placeholder="Email" value="${email}" oninput="email=this.value">
+        <input type="password" placeholder="Password" value="${password}" oninput="password=this.value">
+        <button onclick="handleLogin()">Login</button>
+        <div style="color:red;margin-top:8px;">${loginError}</div>
+      </div>
+    `;}
+
+    function renderSidebar(){
+      return `
+        <button onclick="activeNav='dashboard'; render()" class="${activeNav==='dashboard'?'active':''}">Dashboard</button>
+        <button onclick="activeNav='documents'; render()" class="${activeNav==='documents'?'active':''}">Documents</button>
+        ${isAdmin()?`<button onclick="activeNav='audit'; render()" class="${activeNav==='audit'?'active':''}">Audit</button>`:""}
+        <button onclick="handleLogout()">Logout</button>
+      `;
+    }
+
+    function renderDocuments(){
+      return `
+        <h1 class="h1">DOCUMENTS</h1>
+        <div class="sub">All uploaded documents</div>
+        <div style="margin-bottom:12px;">
+          <input placeholder="Search..." value="${search}" oninput="search=this.value; render()">
+          <select onchange="filterDept=this.value; render()">
+            <option>All</option><option>HR</option><option>IT</option><option>Legal</option><option>Finance</option>
+          </select>
+          <select onchange="filterType=this.value; render()">
+            <option>All</option><option>Policy</option><option>Guide</option><option>Security</option><option>Compliance</option><option>Procedure</option>
+          </select>
+          <button onclick="uploadModal=true; render()">Upload</button>
+        </div>
+        <div class="table">
+          ${filteredDocs().map(d=>`<div style="padding:8px;border-bottom:1px solid var(--border2);">${typeIcons[d.type]||"◇"} ${d.title} - ${d.dept} - ${d.version}</div>`).join("")}
+        </div>
+      `;
+    }
+
+    function renderUploadModal(){
+      return `
+        <div class="upload-modal">
+          <div class="modal-content">
+            <h2>Upload Document</h2>
+            <input placeholder="Document Name" value="${uploadName}" oninput="uploadName=this.value">
+            <select onchange="uploadDept=this.value">
+              <option>HR</option><option>IT</option><option>Legal</option><option>Finance</option>
+            </select>
+            <select onchange="uploadType=this.value">
+              <option>Policy</option><option>Guide</option><option>Security</option><option>Compliance</option><option>Procedure</option>
+            </select>
+            <button onclick="handleUpload()">Upload</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTopbar(){ return `<div class="topbar">DMS - Welcome ${user.name}</div>`; }
+    function renderDashboard(){ return `<h1 class="h1">Dashboard</h1>`; }
+    function renderAudit(){ return `<h1 class="h1">Audit (Admin Only)</h1>`; }
+
+    function render(){ document.getElementById("app").innerHTML = screen==="login"?renderLogin():`
+      <div class="app">
+        ${renderTopbar()}
+        <div class="main-row">
+          <div class="sidebar ${sidebarCollapsed?'collapsed':''}" style="width:${sidebarCollapsed?52:200}px">${renderSidebar()}</div>
+          <div class="content">
+            ${activeNav==='dashboard'?renderDashboard():''}
+            ${activeNav==='documents'?renderDocuments():''}
+            ${activeNav==='audit' && isAdmin()?renderAudit():''}
+          </div>
+        </div>
+        ${uploadModal?renderUploadModal():''}
+      </div>
+    `;}
+    
+    render();
+  </script>
 </body>
 </html>
